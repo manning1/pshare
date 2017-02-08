@@ -120,7 +120,8 @@ class RoboHandler:
       grasps_raw_scores.append(self.eval_grasp(grasp))     
       rand_grasps =  [self.sample_random_grasp(grasp) for j in range(NUM_RAND_GRASPS)]
       rand_grasps_scores = [self.eval_grasp(rand_grasp) for rand_grasp in rand_grasps]    
-      i, grasps_noisy_scores.append(1-np.std(rand_grasps_scores)), i+1
+      grasps_noisy_scores.append(1-np.std(rand_grasps_scores))
+      i = i+1
 
     # Normalize the two metrics
     grasps_raw_scores_sum, grasps_noisy_scores_sum = sum(grasps_raw_scores), sum(grasps_noisy_scores)
