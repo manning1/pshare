@@ -102,8 +102,7 @@ class RoboHandler:
     i = 0
     for grasp in self.grasps_ordered:
       print('Evaluating grasp %d of %d' % (i, len(self.grasps_ordered)) )
-      grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp)
-      i += 1
+      i, grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp), i+1
     
     # sort!
     order = np.argsort(self.grasps_ordered[:,self.graspindices.get('performance')[0]])
@@ -115,27 +114,23 @@ class RoboHandler:
     self.grasps_ordered_noisy = self.grasps.copy()
 
     # Order grasps based on std deviation in eval score due to uncertainty
-    i, NUM_RAND_GRASPS = 0, 5
-    grasps_noisy_scores = []
-    grasps_raw_scores = []
+    i, NUM_RAND_GRASPS, grasps_noisy_scores, grasps_raw_scores = 0, 5, [], []
     for grasp in self.grasps_ordered_noisy:
       print('Evaluating grasp %d of %d with uncertainty' % (i, len(self.grasps_ordered_noisy)) )
-      grasps_raw_scores.append(self.eval_grasp(grasp))
+      grasps_raw_scores.append(self.eval_grasp(grasp))     
       rand_grasps =  [self.sample_random_grasp(grasp) for j in range(NUM_RAND_GRASPS)]
       rand_grasps_scores = [self.eval_grasp(rand_grasp) for rand_grasp in rand_grasps]    
-      grasps_noisy_scores.append(1-np.std(rand_grasps_scores))
-      i += 1
+      i, grasps_noisy_scores.append(1-np.std(rand_grasps_scores)), i+1
 
     # Normalize the two metrics
-    grasps_raw_scores_sum = sum(grasps_raw_scores)
+    grasps_raw_scores_sum, grasps_noisy_scores_sum = sum(grasps_raw_scores), sum(grasps_noisy_scores)
     grasps_raw_scores = [score/grasps_raw_scores_sum for score in grasps_raw_scores]
-    grasps_noisy_scores_sum = sum(grasps_noisy_scores)
     grasps_noisy_scores = [score/grasps_noisy_scores_sum for score in grasps_noisy_scores]
 
     # Update score with a weighted mean
     raw_scores_w, noisy_scores_w = 0.7, 0.3
     for i in range(len(self.grasps_ordered_noisy)):
-      print('Compute final score %d of %d from individual scores %f, %f' % (i, len(self.grasps_ordered_noisy)), grasps_raw_scores[i], grasps_noisy_scores[i])
+      print('Compute final score %d of %d from individual scores %f, %f' % (i, len(self.grasps_ordered_noisy), grasps_raw_scores[i], grasps_noisy_scores[i]))
       self.grasps_ordered_noisy[i][self.graspindices.get('performance')] = [raw_scores_w*grasps_raw_scores[i] + noisy_scores_w*grasps_noisy_scores[i]]
      
     # sort!
@@ -175,7 +170,7 @@ class RoboHandler:
         #return maxEllipsoidVol;
         return singularValueMin
 
-      except openravepy.planning_error,e:
+      except:
         #you get here if there is a failure in planning
         #example: if the hand is already intersecting the object at the initial position/orientation
         return  0.00 # TODO you may want to change this
