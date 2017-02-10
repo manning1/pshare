@@ -52,12 +52,12 @@ class RoboHandler:
     print ('Problem init done ..')
 
     #order grasps based on your own scoring metric
-    #self.order_grasps()
-    #print ('Order grasps done ..')
+    self.order_grasps()
+    print ('Order grasps done ..')
 
     #order grasps with noise
-    #self.order_grasps_noisy()
-    #print ('Order grasps noisy done ..')
+    self.order_grasps_noisy()
+    print ('Order grasps noisy done ..')
 
 
   # the usual initialization for openrave
@@ -73,9 +73,9 @@ class RoboHandler:
 
   # problem specific initialization - load target and grasp module
   def problem_init(self):
-    self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
+    #self.target_kinbody = self.env.ReadKinBodyURI('models/objects/champagne.iv')
     #self.target_kinbody = self.env.ReadKinBodyURI('models/objects/winegoblet.iv')
-    #self.target_kinbody = self.env.ReadKinBodyURI('models/objects/black_plastic_mug.iv')
+    self.target_kinbody = self.env.ReadKinBodyURI('models/objects/black_plastic_mug.iv')
 
     #change the location so it's not under the robot
     T = self.target_kinbody.GetTransform()
@@ -102,7 +102,8 @@ class RoboHandler:
     i = 0
     for grasp in self.grasps_ordered:
       print('Evaluating grasp %d of %d' % (i, len(self.grasps_ordered)) )
-      i, grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp), i+1
+      grasp[self.graspindices.get('performance')] = self.eval_grasp(grasp)
+      i += 1
     
     # sort!
     order = np.argsort(self.grasps_ordered[:,self.graspindices.get('performance')[0]])
@@ -121,7 +122,7 @@ class RoboHandler:
       rand_grasps =  [self.sample_random_grasp(grasp) for j in range(NUM_RAND_GRASPS)]
       rand_grasps_scores = [self.eval_grasp(rand_grasp) for rand_grasp in rand_grasps]    
       grasps_noisy_scores.append(1-np.std(rand_grasps_scores))
-      i = i+1
+      i += 1
 
     # Normalize the two metrics
     grasps_raw_scores_sum, grasps_noisy_scores_sum = sum(grasps_raw_scores), sum(grasps_noisy_scores)
@@ -129,7 +130,7 @@ class RoboHandler:
     grasps_noisy_scores = [score/grasps_noisy_scores_sum for score in grasps_noisy_scores]
 
     # Update score with a weighted mean
-    raw_scores_w, noisy_scores_w = 0.7, 0.3
+    raw_scores_w, noisy_scores_w = 0.5, 0.5
     for i in range(len(self.grasps_ordered_noisy)):
       print('Compute final score %d of %d from individual scores %f, %f' % (i, len(self.grasps_ordered_noisy), grasps_raw_scores[i], grasps_noisy_scores[i]))
       self.grasps_ordered_noisy[i][self.graspindices.get('performance')] = [raw_scores_w*grasps_raw_scores[i] + noisy_scores_w*grasps_noisy_scores[i]]
