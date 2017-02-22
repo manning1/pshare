@@ -49,6 +49,8 @@ class HerbEnvironment(object):
 
     def ComputeDeltaLocation(self, start_config, end_config):
         dist = self.ComputeDistance(start_config, end_config)
+        if dist == 0:
+            return end_config
         dir_cosines = map(lambda (x1, x2): (float(x2-x1))/dist, zip(start_config, end_config))
         delta_locn = map(lambda (dir_cosine): self.delta*dir_cosine*dist, dir_cosines)
         new_dof_vals = map(lambda (x, d): x+d, zip(start_config, delta_locn))
