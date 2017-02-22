@@ -25,7 +25,7 @@ class SimpleEnvironment(object):
         self.delta = .1
         self.visualize = True
 
-    def SetGoalParameters(self, goal_config, p=.2, delta=.1, visualize=True):
+    def SetGoalParameters(self, goal_config, p=.2, delta=.05, visualize=True):
         self.goal_config = goal_config
         self.p = p
         self.delta = delta

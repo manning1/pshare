@@ -29,7 +29,7 @@ class HerbEnvironment(object):
         self.delta = 0.01
         self.visualize = False
 
-    def SetGoalParameters(self, goal_config, p = 0.2, visualize = False, delta = .2):
+    def SetGoalParameters(self, goal_config, p = 0.2, visualize = False, delta = .05):
         self.goal_config = goal_config
         self.p = p
         self.visualize = visualize

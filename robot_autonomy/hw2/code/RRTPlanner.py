@@ -7,7 +7,7 @@ class RRTPlanner(object):
         self.planning_env = planning_env
         self.visualize = visualize
 
-    def Plan(self, start_config, goal_config, epsilon = 0.3):
+    def Plan(self, start_config, goal_config, epsilon = 0.2):
       
         print("Epsilon=", epsilon)  
         tree = RRTTree(self.planning_env, start_config)
@@ -24,7 +24,7 @@ class RRTPlanner(object):
             vid, v = tree.GetNearestVertex(goal_config)
             d = self.planning_env.ComputeDistance(v, goal_config)
             if (iter%10 == 0): 
-                print('Closest dist to goal :', d)
+                print(iter, ' Closest dist to goal :', d)
 
             if ((d is not None) and  (d < epsilon)):
                 tree.AddEdge(vid, tree.AddVertex(goal_config))

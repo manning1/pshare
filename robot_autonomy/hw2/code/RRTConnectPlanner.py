@@ -64,7 +64,7 @@ class RRTConnectPlanner(object):
             if (iter%10 == 0): 
                 d_f = self.planning_env.ComputeDistance(ftree.GetNearestVertex(goal_config)[1], goal_config)
                 d_r = self.planning_env.ComputeDistance(rtree.GetNearestVertex(start_config)[1], start_config)
-                print('Closest ftree dist to end goal :', d_f, '; Closest rtree dist to start goal :', d_r)
+                print(iter, ' Closest ftree dist to end goal :', d_f, '; Closest rtree dist to start goal :', d_r)
 
         dist = self.planning_env.ComputeDistance(ftree.vertices[-1], rtree.vertices[-1]) 
         print("Dist=", dist)
