@@ -7,17 +7,15 @@ class RRTConnectPlanner(object):
         self.planning_env = planning_env
         self.visualize = visualize
         
-    def AssignTrees(self, t1, t2):
-        return (t1, t2) if (len(t1.vertices) < len(t2.vertices)) else (t2, t1)
-
-    def RandomGoalPlan(self, tree):
-        v_rand = self.planning_env.GenerateRandomConfiguration()
+    def RandomGoalPlan(self, tree, goal_state):
+        v_rand = self.planning_env.GenerateRandomConfiguration(goal_state)
         v_near_id, v_near = tree.GetNearestVertex(v_rand)
         v_new = self.planning_env.Extend(v_near, v_rand)
         if v_new is not None:
             v_new_id = tree.AddVertex(v_new)
             tree.AddEdge(v_near_id, v_new_id)
-            self.planning_env.PlotEdge(v_near, v_new)
+            if self.planning_env.visualize:
+                self.planning_env.PlotEdge(v_near, v_new)
         return v_new
 
     def ConnectPlan(self, tree, target, epsilon):
@@ -28,11 +26,13 @@ class RRTConnectPlanner(object):
         while (v_new is not None):
             v_new_id = tree.AddVertex(v_new)
             tree.AddEdge(v_near_id, v_new_id)    
-            self.planning_env.PlotEdge(v_near, v_new)
+            if self.planning_env.visualize:
+                self.planning_env.PlotEdge(v_near, v_new)
             if self.planning_env.ComputeDistance(v_new, target) < epsilon:
                 target_id = tree.AddVertex(target)
                 tree.AddEdge(v_new_id, target_id)    
-                self.planning_env.PlotEdge(v_new, target)
+                if self.planning_env.visualize:
+                    self.planning_env.PlotEdge(v_new, target)
                 return True
             else:
                 v_near_id, v_near = v_new_id, v_new            
@@ -40,10 +40,7 @@ class RRTConnectPlanner(object):
         return False
         
 
-    def Plan(self, start_config, goal_config, epsilon = 0.4):
-        
-        self.planning_env.SetGoalParameters(goal_config)        
-
+    def Plan(self, start_config, goal_config, epsilon = 0.2):
         ftree = RRTTree(self.planning_env, start_config)
         rtree = RRTTree(self.planning_env, goal_config)
         plan = []
@@ -51,22 +48,23 @@ class RRTConnectPlanner(object):
         if self.visualize and hasattr(self.planning_env, 'InitializePlot'):
             self.planning_env.InitializePlot(goal_config)
 
-        NUM_ITERATIONS = 1000
+        NUM_ITERATIONS = 100000
         for iter in range(NUM_ITERATIONS):
-            
-            (rand_goal_tree, connect_tree) = self.AssignTrees(ftree, rtree)
 
-            # random goal path
-            v_new = self.RandomGoalPlan(rand_goal_tree)
+            # pick random goal tree and connect path tree
+            rand_tree, rand_goal_config = (ftree, goal_config) if len(ftree.vertices) < len(rtree.vertices) else (rtree, start_config)
+            connect_tree = ftree if len(ftree.vertices) >= len(rtree.vertices) else rtree
 
-            # connect path
+            # random goal plan
+            v_new = self.RandomGoalPlan(rand_tree, rand_goal_config)
+            # connect path plan
             if (v_new is not None) and self.ConnectPlan(connect_tree, v_new, epsilon):
-                break            
-            if (iter%1000 == 0): 
-                d = self.planning_env.ComputeDistance(ftree.vertices[-1], rtree.vertices[-1])
-                print('Closest dist to goal :', d)
+                break     
 
-
+            if (iter%10 == 0): 
+                d_f = self.planning_env.ComputeDistance(ftree.GetNearestVertex(goal_config)[1], goal_config)
+                d_r = self.planning_env.ComputeDistance(rtree.GetNearestVertex(start_config)[1], start_config)
+                print('Closest ftree dist to end goal :', d_f, '; Closest rtree dist to start goal :', d_r)
 
         dist = self.planning_env.ComputeDistance(ftree.vertices[-1], rtree.vertices[-1]) 
         print("Dist=", dist)
@@ -84,6 +82,7 @@ class RRTConnectPlanner(object):
 
             if self.visualize and hasattr(self.planning_env, 'InitializePlot'):
                 self.planning_env.InitializePlot(goal_config)
-                [self.planning_env.PlotEdge(plan[i-1], plan[i]) for i in range(1,len(plan))]
-                    
+                if self.planning_env.visualize:
+                    [self.planning_env.PlotEdge(plan[i-1], plan[i]) for i in range(1,len(plan))]
+                          
         return plan
